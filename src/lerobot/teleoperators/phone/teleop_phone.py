@@ -88,7 +88,7 @@ class IOSPhone(BasePhone, Teleoperator):
         require_package("teleop", extra="phone")
         super().__init__(config)
         self.config = config
-        self._group: Group | None = None
+        self._group = None
 
     @property
     def is_connected(self) -> bool:

@@ -41,7 +41,7 @@ if PYNPUT_AVAILABLE:
             logging.info("No DISPLAY set. Skipping pynput import.")
             PYNPUT_AVAILABLE = False
         else:
-            from pynput import keyboard
+            from pynput.keyboard import Key, Listener
     except Exception as e:
         PYNPUT_AVAILABLE = False
         logging.info(f"Could not import pynput: {e}")
@@ -63,7 +63,7 @@ class KeyboardTeleop(Teleoperator):
 
         self.event_queue: Queue = Queue()
         self.current_pressed: dict = {}
-        self.listener = None
+        self.listener: Listener | None = None
         self.logs: dict = {}
 
     @property
@@ -80,7 +80,7 @@ class KeyboardTeleop(Teleoperator):
 
     @property
     def is_connected(self) -> bool:
-        return PYNPUT_AVAILABLE and isinstance(self.listener, keyboard.Listener) and self.listener.is_alive()
+        return PYNPUT_AVAILABLE and isinstance(self.listener, Listener) and self.listener.is_alive()
 
     @property
     def is_calibrated(self) -> bool:
@@ -91,7 +91,7 @@ class KeyboardTeleop(Teleoperator):
     def connect(self) -> None:
         if PYNPUT_AVAILABLE:
             logging.info("pynput is available - enabling local keyboard listener.")
-            self.listener = keyboard.Listener(
+            self.listener = Listener(
                 on_press=self._on_press,
                 on_release=self._on_release,
             )
@@ -111,7 +111,7 @@ class KeyboardTeleop(Teleoperator):
     def _on_release(self, key):
         if hasattr(key, "char"):
             self.event_queue.put((key.char, False))
-        if key == keyboard.Key.esc:
+        if key == Key.esc:
             logging.info("ESC pressed, disconnecting.")
             self.disconnect()
 
@@ -183,22 +183,22 @@ class KeyboardEndEffectorTeleop(KeyboardTeleop):
 
         # Generate action based on current key states
         for key, val in self.current_pressed.items():
-            if key == keyboard.Key.up:
+            if key == Key.up:
                 delta_y = -int(val)
-            elif key == keyboard.Key.down:
+            elif key == Key.down:
                 delta_y = int(val)
-            elif key == keyboard.Key.left:
+            elif key == Key.left:
                 delta_x = int(val)
-            elif key == keyboard.Key.right:
+            elif key == Key.right:
                 delta_x = -int(val)
-            elif key == keyboard.Key.shift:
+            elif key == Key.shift:
                 delta_z = -int(val)
-            elif key == keyboard.Key.shift_r:
+            elif key == Key.shift_r:
                 delta_z = int(val)
-            elif key == keyboard.Key.ctrl_r:
+            elif key == Key.ctrl_r:
                 # Gripper actions are expected to be between 0 (close), 1 (stay), 2 (open)
                 gripper_action = int(val) + 1
-            elif key == keyboard.Key.ctrl_l:
+            elif key == Key.ctrl_l:
                 gripper_action = int(val) - 1
             elif val:
                 # If the key is pressed, add it to the misc_keys_queue
@@ -247,14 +247,14 @@ class KeyboardEndEffectorTeleop(KeyboardTeleop):
 
         # Check if any movement keys are currently pressed (indicates intervention)
         movement_keys = [
-            keyboard.Key.up,
-            keyboard.Key.down,
-            keyboard.Key.left,
-            keyboard.Key.right,
-            keyboard.Key.shift,
-            keyboard.Key.shift_r,
-            keyboard.Key.ctrl_r,
-            keyboard.Key.ctrl_l,
+            Key.up,
+            Key.down,
+            Key.left,
+            Key.right,
+            Key.shift,
+            Key.shift_r,
+            Key.ctrl_r,
+            Key.ctrl_l,
         ]
         is_intervention = any(self.current_pressed.get(key, False) for key in movement_keys)
 
